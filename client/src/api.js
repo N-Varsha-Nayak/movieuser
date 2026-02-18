@@ -1,4 +1,4 @@
-const API_BASE = "http://localhost:5000/api";
+const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api";
 
 export async function apiRequest(path, payload) {
   try {
@@ -16,7 +16,7 @@ export async function apiRequest(path, payload) {
     return data;
   } catch (error) {
     if (error instanceof TypeError) {
-      throw new Error("Cannot connect to API server. Ensure backend is running on http://localhost:5000.");
+      throw new Error("Cannot connect to API server. Check VITE_API_BASE_URL and backend CORS settings.");
     }
     throw error;
   }

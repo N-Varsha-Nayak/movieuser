@@ -53,13 +53,26 @@ copy .env.example server/.env
 ```
 Then set `DB_PASSWORD` in `server/.env`.
 
-3. Start frontend + backend together:
+3. Create frontend env file:
+```bash
+copy client/.env.example client/.env
+```
+For local dev keep:
+`VITE_API_BASE_URL=http://localhost:5000/api`
+
+4. Start frontend + backend together:
 ```bash
 npm run dev
 ```
 
 - Frontend: `http://localhost:5173`
 - Backend: `http://localhost:5000`
+
+## Vercel Frontend + Remote Backend
+- Set `VITE_API_BASE_URL` in Vercel to your deployed backend URL, for example:
+`https://your-backend-domain.com/api`
+- In backend env (`server/.env` or deployment env), set `CLIENT_URL` to include your frontend origins:
+`http://localhost:5173,http://localhost:5174,https://your-vercel-app.vercel.app`
 
 ## API Endpoints
 - `POST /api/register`
