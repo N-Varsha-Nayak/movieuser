@@ -1,119 +1,67 @@
-import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
-import { apiRequest } from "../api";
+import { Link, useNavigate } from "react-router-dom";
+import { postApi } from "../api";
 
-const initialState = {
-  userId: "",
-  username: "",
-  password: "",
-  email: "",
-  phone: ""
-};
+const init = { userId: "", username: "", password: "", email: "", phone: "" };
 
-function validate(values) {
-  const errors = {};
-
-  if (!/^[a-zA-Z0-9_]{3,30}$/.test(values.userId)) {
-    errors.userId = "User ID must be 3-30 chars (letters, numbers, underscore).";
-  }
-
-  if (!/^[a-zA-Z0-9_]{3,30}$/.test(values.username)) {
-    errors.username = "Username must be 3-30 chars (letters, numbers, underscore).";
-  }
-
-  if (!/^(?=.*[A-Za-z])(?=.*\d).{8,64}$/.test(values.password)) {
-    errors.password = "Password must be 8+ chars and include letters and numbers.";
-  }
-
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email)) {
-    errors.email = "Enter a valid email address.";
-  }
-
-  if (!/^\+?[0-9]{10,15}$/.test(values.phone)) {
-    errors.phone = "Phone must be 10-15 digits (optional +).";
-  }
-
-  return errors;
+function validate(v) {
+  const e = {};
+  if (!/^[A-Za-z0-9_]{3,30}$/.test(v.userId)) e.userId = "Use 3-30 letters/numbers/_";
+  if (!/^[A-Za-z0-9_]{3,30}$/.test(v.username)) e.username = "Use 3-30 letters/numbers/_";
+  if (!/^(?=.*[A-Za-z])(?=.*\d).{8,64}$/.test(v.password)) e.password = "Min 8 chars, include letter + number";
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.email)) e.email = "Enter valid email";
+  if (!/^\+?[0-9]{10,15}$/.test(v.phone)) e.phone = "Phone must be 10-15 digits";
+  return e;
 }
 
 export default function RegisterPage() {
-  const [form, setForm] = useState(initialState);
+  const [form, setForm] = useState(init);
   const [errors, setErrors] = useState({});
-  const [apiError, setApiError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [apiError, setApiError] = useState("");
   const navigate = useNavigate();
 
-  const handleChange = (event) => {
-    const { name, value } = event.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
+  const onChange = (e) => {
+    const { name, value } = e.target;
+    setForm((p) => ({ ...p, [name]: value }));
   };
 
-  const handleSubmit = async (event) => {
-    event.preventDefault();
+  const onSubmit = async (e) => {
+    e.preventDefault();
     setApiError("");
-
-    const validationErrors = validate(form);
-    setErrors(validationErrors);
-    if (Object.keys(validationErrors).length > 0) return;
+    const nextErrors = validate(form);
+    setErrors(nextErrors);
+    if (Object.keys(nextErrors).length) return;
 
     try {
       setLoading(true);
-      await apiRequest("/register", form);
+      await postApi("/register", form);
       navigate("/login");
-    } catch (error) {
-      setApiError(error.message);
+    } catch (err) {
+      setApiError(err.message);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <main className="page-bg">
+    <main className="netflix-bg">
       <section className="glass-card">
-        <h1>Create Account</h1>
-        <p className="subtitle">Join MovieLand with your profile details.</p>
+        <h1>Create your account</h1>
+        <p className="sub">Start your MovieLand journey.</p>
 
-        <form onSubmit={handleSubmit} noValidate>
-          <label>
-            User ID
-            <input name="userId" value={form.userId} onChange={handleChange} placeholder="user_1001" />
-            {errors.userId && <span className="error">{errors.userId}</span>}
-          </label>
+        <form onSubmit={onSubmit} noValidate>
+          <label>User ID<input name="userId" value={form.userId} onChange={onChange} placeholder="user_123" />{errors.userId && <span className="err">{errors.userId}</span>}</label>
+          <label>Username<input name="username" value={form.username} onChange={onChange} placeholder="netflixfan" />{errors.username && <span className="err">{errors.username}</span>}</label>
+          <label>Password<input type="password" name="password" value={form.password} onChange={onChange} placeholder="********" />{errors.password && <span className="err">{errors.password}</span>}</label>
+          <label>Email<input type="email" name="email" value={form.email} onChange={onChange} placeholder="you@email.com" />{errors.email && <span className="err">{errors.email}</span>}</label>
+          <label>Phone<input name="phone" value={form.phone} onChange={onChange} placeholder="+911234567890" />{errors.phone && <span className="err">{errors.phone}</span>}</label>
 
-          <label>
-            Username
-            <input name="username" value={form.username} onChange={handleChange} placeholder="cinemaFan" />
-            {errors.username && <span className="error">{errors.username}</span>}
-          </label>
-
-          <label>
-            Password
-            <input type="password" name="password" value={form.password} onChange={handleChange} placeholder="********" />
-            {errors.password && <span className="error">{errors.password}</span>}
-          </label>
-
-          <label>
-            Email
-            <input type="email" name="email" value={form.email} onChange={handleChange} placeholder="name@example.com" />
-            {errors.email && <span className="error">{errors.email}</span>}
-          </label>
-
-          <label>
-            Phone
-            <input name="phone" value={form.phone} onChange={handleChange} placeholder="+12345678901" />
-            {errors.phone && <span className="error">{errors.phone}</span>}
-          </label>
-
-          {apiError && <p className="error global">{apiError}</p>}
-
-          <button type="submit" disabled={loading}>
-            {loading ? "Creating..." : "Register"}
-          </button>
+          {apiError && <p className="err global">{apiError}</p>}
+          <button disabled={loading} type="submit">{loading ? "Creating..." : "Register"}</button>
         </form>
 
-        <p className="switch">
-          Already have an account? <Link to="/login">Sign in</Link>
-        </p>
+        <p className="switch">Already registered? <Link to="/login">Sign in</Link></p>
       </section>
     </main>
   );

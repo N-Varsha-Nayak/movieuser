@@ -1,52 +1,47 @@
 import bcrypt from "bcrypt";
 import { pool } from "../config/db.js";
-import { validateLogin, validateRegistration } from "../utils/validators.js";
+import { validateLogin, validateRegister } from "../utils/validators.js";
 
-const SALT_ROUNDS = 10;
 const REDIRECT_URL = "https://movieland-omega-steel.vercel.app/";
 
-export async function registerUser(req, res) {
+export async function register(req, res) {
   try {
-    const validationError = validateRegistration(req.body);
-    if (validationError) {
-      return res.status(400).json({ message: validationError });
-    }
+    const err = validateRegister(req.body);
+    if (err) return res.status(400).json({ message: err });
 
     const { userId, username, password, email, phone } = req.body;
 
-    const [existing] = await pool.execute(
-      "SELECT id FROM users WHERE user_id = ? OR username = ? OR email = ? LIMIT 1",
+    const [exists] = await pool.execute(
+      "SELECT id FROM movieusers WHERE user_id = ? OR username = ? OR email = ? LIMIT 1",
       [userId, username, email]
     );
 
-    if (existing.length > 0) {
+    if (exists.length > 0) {
       return res.status(409).json({ message: "User ID, username, or email already exists." });
     }
 
-    const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
+    const hashed = await bcrypt.hash(password, 10);
 
     await pool.execute(
-      "INSERT INTO users (user_id, username, password_hash, email, phone) VALUES (?, ?, ?, ?, ?)",
-      [userId, username, passwordHash, email, phone]
+      "INSERT INTO movieusers (user_id, username, password_hash, email, phone) VALUES (?, ?, ?, ?, ?)",
+      [userId, username, hashed, email, phone]
     );
 
     return res.status(201).json({ message: "Registration successful." });
-  } catch (error) {
-    return res.status(500).json({ message: "Failed to register user." });
+  } catch {
+    return res.status(500).json({ message: "Registration failed." });
   }
 }
 
-export async function loginUser(req, res) {
+export async function login(req, res) {
   try {
-    const validationError = validateLogin(req.body);
-    if (validationError) {
-      return res.status(400).json({ message: validationError });
-    }
+    const err = validateLogin(req.body);
+    if (err) return res.status(400).json({ message: err });
 
     const { username, password } = req.body;
 
     const [rows] = await pool.execute(
-      "SELECT id, password_hash FROM users WHERE username = ? LIMIT 1",
+      "SELECT id, password_hash FROM movieusers WHERE username = ? LIMIT 1",
       [username]
     );
 
@@ -54,13 +49,13 @@ export async function loginUser(req, res) {
       return res.status(401).json({ message: "Invalid username or password." });
     }
 
-    const isMatch = await bcrypt.compare(password, rows[0].password_hash);
-    if (!isMatch) {
+    const ok = await bcrypt.compare(password, rows[0].password_hash);
+    if (!ok) {
       return res.status(401).json({ message: "Invalid username or password." });
     }
 
     return res.json({ message: "Login successful.", redirectUrl: REDIRECT_URL });
-  } catch (error) {
-    return res.status(500).json({ message: "Failed to login." });
+  } catch {
+    return res.status(500).json({ message: "Login failed." });
   }
 }

@@ -1,21 +1,20 @@
-import { Link } from "react-router-dom";
 import { useState } from "react";
-import { apiRequest } from "../api";
+import { Link } from "react-router-dom";
+import { postApi } from "../api";
 
 export default function LoginPage() {
   const [form, setForm] = useState({ username: "", password: "" });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const handleChange = (event) => {
-    const { name, value } = event.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
+  const onChange = (e) => {
+    const { name, value } = e.target;
+    setForm((p) => ({ ...p, [name]: value }));
   };
 
-  const handleSubmit = async (event) => {
-    event.preventDefault();
+  const onSubmit = async (e) => {
+    e.preventDefault();
     setError("");
-
     if (!form.username || !form.password) {
       setError("Username and password are required.");
       return;
@@ -23,42 +22,30 @@ export default function LoginPage() {
 
     try {
       setLoading(true);
-      const data = await apiRequest("/login", form);
+      const data = await postApi("/login", form);
       window.location.href = data.redirectUrl;
-    } catch (apiError) {
-      setError(apiError.message);
+    } catch (err) {
+      setError(err.message);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <main className="page-bg">
+    <main className="netflix-bg">
       <section className="glass-card">
-        <h1>Welcome Back</h1>
-        <p className="subtitle">Log in to continue to MovieLand.</p>
+        <h1>Sign in</h1>
+        <p className="sub">Watch everywhere. Cancel anytime.</p>
 
-        <form onSubmit={handleSubmit} noValidate>
-          <label>
-            Username
-            <input name="username" value={form.username} onChange={handleChange} placeholder="cinemaFan" />
-          </label>
+        <form onSubmit={onSubmit} noValidate>
+          <label>Username<input name="username" value={form.username} onChange={onChange} placeholder="netflixfan" /></label>
+          <label>Password<input type="password" name="password" value={form.password} onChange={onChange} placeholder="********" /></label>
 
-          <label>
-            Password
-            <input type="password" name="password" value={form.password} onChange={handleChange} placeholder="********" />
-          </label>
-
-          {error && <p className="error global">{error}</p>}
-
-          <button type="submit" disabled={loading}>
-            {loading ? "Signing in..." : "Login"}
-          </button>
+          {error && <p className="err global">{error}</p>}
+          <button disabled={loading} type="submit">{loading ? "Signing in..." : "Login"}</button>
         </form>
 
-        <p className="switch">
-          New user? <Link to="/register">Create account</Link>
-        </p>
+        <p className="switch">New here? <Link to="/register">Create account</Link></p>
       </section>
     </main>
   );
